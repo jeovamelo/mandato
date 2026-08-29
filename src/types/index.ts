@@ -38,6 +38,7 @@ export interface LocalTrabalho {
   nome_empresa_ou_orgao: string; // Ex: "Secretaria de Educação - SME", "Criart Serviços Terceirizados", "Servis Segurança"
   sigla_ou_apelido?: string; // Ex: "SME", "CRIART", "SMS", "SER 1"
   endereco_trabalho: string; // Endereço físico do posto de trabalho
+  cidade_trabalho?: string; // Cidade onde fica o posto; em Fortaleza, detalhar também o bairro
   bairro_trabalho?: string; // Bairro onde fica o posto
   esfera: EsferaLocal; // Municipal - Fortaleza ou Estadual - Ceará
   contrato_convenio?: string; // Ex: "Contrato nº 142/2024 - PMF"

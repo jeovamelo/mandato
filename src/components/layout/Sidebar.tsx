@@ -5,7 +5,6 @@ import {
   Users,
   Briefcase,
   MapPin,
-  Database,
   RefreshCw,
   Sparkles
 } from 'lucide-react';
@@ -38,7 +37,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'indicados', label: 'Pessoas & Lideranças', icon: Users, badge: `${metrics.total_indicados_cadastrados}` },
     { id: 'locais', label: 'Locais & Terceirizadas', icon: Briefcase },
     { id: 'mapa', label: 'Mapeamento por Bairros', icon: MapPin, badge: 'Fortaleza' },
-    { id: 'sql', label: 'SQL / Supabase DDL', icon: Database }
   ];
 
   return (
@@ -46,9 +44,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Navegação Principal */}
       <div className="p-4 space-y-6">
         <div>
-          <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Gestão Estratégica
-          </p>
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;

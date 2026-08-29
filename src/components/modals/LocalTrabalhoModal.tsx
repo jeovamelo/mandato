@@ -19,6 +19,7 @@ export const LocalTrabalhoModal: React.FC<LocalTrabalhoModalProps> = ({
   const [nomeEmpresaOuOrgao, setNomeEmpresaOuOrgao] = useState('');
   const [siglaOuApelido, setSiglaOuApelido] = useState('');
   const [enderecoTrabalho, setEnderecoTrabalho] = useState('');
+  const [cidadeTrabalho, setCidadeTrabalho] = useState('Fortaleza');
   const [bairroTrabalho, setBairroTrabalho] = useState('');
   const [esfera, setEsfera] = useState<EsferaLocal>('Municipal - Fortaleza');
   const [contratoConvenio, setContratoConvenio] = useState('');
@@ -31,6 +32,7 @@ export const LocalTrabalhoModal: React.FC<LocalTrabalhoModalProps> = ({
       setNomeEmpresaOuOrgao(localToEdit.nome_empresa_ou_orgao);
       setSiglaOuApelido(localToEdit.sigla_ou_apelido || '');
       setEnderecoTrabalho(localToEdit.endereco_trabalho);
+      setCidadeTrabalho(localToEdit.cidade_trabalho || 'Fortaleza');
       setBairroTrabalho(localToEdit.bairro_trabalho || '');
       setEsfera(localToEdit.esfera);
       setContratoConvenio(localToEdit.contrato_convenio || '');
@@ -41,6 +43,7 @@ export const LocalTrabalhoModal: React.FC<LocalTrabalhoModalProps> = ({
       setNomeEmpresaOuOrgao('');
       setSiglaOuApelido('');
       setEnderecoTrabalho('');
+      setCidadeTrabalho('Fortaleza');
       setBairroTrabalho('');
       setEsfera('Municipal - Fortaleza');
       setContratoConvenio('');
@@ -59,7 +62,8 @@ export const LocalTrabalhoModal: React.FC<LocalTrabalhoModalProps> = ({
       tipo_instituicao: tipoInstituicao,
       nome_empresa_ou_orgao: nomeEmpresaOuOrgao,
       sigla_ou_apelido: siglaOuApelido,
-      endereco_trabalho: enderecoTrabalho,
+          endereco_trabalho: enderecoTrabalho,
+      cidade_trabalho: cidadeTrabalho,
       bairro_trabalho: bairroTrabalho,
       esfera,
       contrato_convenio: contratoConvenio,
@@ -198,8 +202,20 @@ export const LocalTrabalhoModal: React.FC<LocalTrabalhoModalProps> = ({
             />
           </div>
 
-          {/* Bairro do Trabalho & Contrato */}
+          {/* Cidade, bairro do Trabalho & Contrato */}
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-slate-300 font-semibold block mb-1">
+                Cidade do Posto de Trabalho
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Fortaleza, Caucaia, Sobral"
+                value={cidadeTrabalho}
+                onChange={(e) => setCidadeTrabalho(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500"
+              />
+            </div>
             <div>
               <label className="text-slate-300 font-semibold block mb-1">
                 Bairro do Posto de Trabalho
