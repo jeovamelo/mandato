@@ -39,12 +39,13 @@ services:
       - "traefik.http.routers.mandato-secure.entrypoints=websecure"
       - "traefik.http.routers.mandato-secure.tls=true"
       - "traefik.http.routers.mandato-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.mandato-secure.service=mandato-frontend-svc"
       # HTTP Router
       - "traefik.http.routers.mandato-http.rule=Host(`mandato.democracias.org`)"
       - "traefik.http.routers.mandato-http.entrypoints=web"
+      - "traefik.http.routers.mandato-http.service=mandato-frontend-svc"
       # Load Balancer
-      - "traefik.http.services.mandato-secure.loadbalancer.server.port=80"
-      - "traefik.http.services.mandato-http.loadbalancer.server.port=80"
+      - "traefik.http.services.mandato-frontend-svc.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthz"]
       interval: 30s
@@ -98,7 +99,8 @@ services:
       - "traefik.http.routers.mandato-api.entrypoints=websecure,web"
       - "traefik.http.routers.mandato-api.tls=true"
       - "traefik.http.routers.mandato-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mandato-api.loadbalancer.server.port=3000"
+      - "traefik.http.routers.mandato-api.service=mandato-api-svc"
+      - "traefik.http.services.mandato-api-svc.loadbalancer.server.port=3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,7 +124,8 @@ services:
       - "traefik.http.routers.mandato-db.entrypoints=websecure,web"
       - "traefik.http.routers.mandato-db.tls=true"
       - "traefik.http.routers.mandato-db.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mandato-db.loadbalancer.server.port=8080"
+      - "traefik.http.routers.mandato-db.service=mandato-db-svc"
+      - "traefik.http.services.mandato-db-svc.loadbalancer.server.port=8080"
     depends_on:
       postgres:
         condition: service_healthy
