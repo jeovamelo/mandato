@@ -53,6 +53,18 @@
   box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
 }
 
+/* O mapa não pode atravessar fichas e formulários modais. */
+.leaflet-container,
+.leaflet-pane,
+.leaflet-control-container {
+  z-index: 0 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1 !important;
+}
+
 .glow-amber {
   box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25);
 }
