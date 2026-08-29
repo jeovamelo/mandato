@@ -1,0 +1,128 @@
+# ==============================================================================
+# MANDATOGOV - STACK DOCKER UNIFICADA (VPS: mandato.democracias.org)
+# ==============================================================================
+
+networks:
+  mandato-net:
+    external: true
+  traefik-ftjh:
+    external: true
+
+volumes:
+  mandato_pgdata:
+    name: mandato_pgdata
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. FRONTEND: MandatoGov Web App (React + Vite + Tailwind + Nginx Interno)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-https://mandato.democracias.org}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mandatogov_anon_token_production}
+    container_name: mandato-frontend
+    restart: unless-stopped
+    networks:
+      - mandato-net
+      - traefik-ftjh
+    environment:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-https://mandato.democracias.org}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mandatogov_anon_token_production}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-ftjh"
+      # HTTPS Router
+      - "traefik.http.routers.mandato-secure.rule=Host(`mandato.democracias.org`)"
+      - "traefik.http.routers.mandato-secure.entrypoints=websecure"
+      - "traefik.http.routers.mandato-secure.tls=true"
+      - "traefik.http.routers.mandato-secure.tls.certresolver=letsencrypt"
+      # HTTP Router
+      - "traefik.http.routers.mandato-http.rule=Host(`mandato.democracias.org`)"
+      - "traefik.http.routers.mandato-http.entrypoints=web"
+      # Load Balancer
+      - "traefik.http.services.mandato-secure.loadbalancer.server.port=80"
+      - "traefik.http.services.mandato-http.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # 2. BANCO DE DADOS: PostgreSQL 15 com DDL e Catálogo Ceará & Fortaleza
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: mandato-postgres
+    restart: unless-stopped
+    networks:
+      - mandato-net
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mandatodb}
+      POSTGRES_USER: ${POSTGRES_USER:-mandato_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mandato_secure_pass_2026}
+    volumes:
+      - mandato_pgdata:/var/lib/postgresql/data
+      - ./init-db/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mandato_admin} -d ${POSTGRES_DB:-mandatodb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 3. SUPABASE REST API: PostgREST (API Automática do Supabase sobre PostgreSQL)
+  # ----------------------------------------------------------------------------
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: mandato-postgrest
+    restart: unless-stopped
+    networks:
+      - mandato-net
+      - traefik-ftjh
+    environment:
+      PGRST_DB_URI: postgres://${POSTGRES_USER:-mandato_admin}:${POSTGRES_PASSWORD:-mandato_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-mandatodb}
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: ${POSTGRES_USER:-mandato_admin}
+      PGRST_OPENAPI_SERVER_PROXY_URI: ${VITE_SUPABASE_URL:-https://mandato.democracias.org}/api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-ftjh"
+      - "traefik.http.routers.mandato-api.rule=Host(`api.mandato.democracias.org`)"
+      - "traefik.http.routers.mandato-api.entrypoints=websecure,web"
+      - "traefik.http.routers.mandato-api.tls=true"
+      - "traefik.http.routers.mandato-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mandato-api.loadbalancer.server.port=3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # 4. PAINEL VISUAL DE BANCO & TABELAS: Adminer (SQL, Tabelas, Índices)
+  # ----------------------------------------------------------------------------
+  adminer:
+    image: adminer:latest
+    container_name: mandato-adminer
+    restart: unless-stopped
+    networks:
+      - mandato-net
+      - traefik-ftjh
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-ftjh"
+      - "traefik.http.routers.mandato-db.rule=Host(`db.mandato.democracias.org`)"
+      - "traefik.http.routers.mandato-db.entrypoints=websecure,web"
+      - "traefik.http.routers.mandato-db.tls=true"
+      - "traefik.http.routers.mandato-db.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mandato-db.loadbalancer.server.port=8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
